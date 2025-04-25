@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 pygame.init()
 
-
 WIDTH = 1200
 HEIGHT = 800
 CELL_SIZE = 100
@@ -17,7 +16,6 @@ DAMAGE_INTERVAL = 1000
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("test nazar jak proekt")
-
 
 def draw_message_box(screen, lines, x, y, width, height):
     pygame.draw.rect(screen, (50, 50, 50), (x, y, width, height))
@@ -30,7 +28,6 @@ def draw_message_box(screen, lines, x, y, width, height):
         text_rect = text_surface.get_rect(center=(x + width // 2, current_y))
         screen.blit(text_surface, text_rect)
         current_y += font.get_height()
-
 
 def is_wall(x, y, width, height):
     x = int(x)
@@ -50,7 +47,6 @@ def is_wall(x, y, width, height):
                     return True
     return False
 
-
 @dataclass
 class HealthSystem:
     max_hearts: int
@@ -61,7 +57,6 @@ class HealthSystem:
         if pygame.time.get_ticks() - self.last_damage_time > DAMAGE_INTERVAL:
             self.current_hearts = max(0, self.current_hearts - amount)
             self.last_damage_time = pygame.time.get_ticks()
-
 
 class Camera:
     def __init__(self, map_size):
@@ -80,7 +75,6 @@ class Camera:
         self.x = max(0, min(self.x, self.map_width - self.width))
         self.y = max(0, min(self.y, self.map_height - self.height))
 
-
 class Player:
     def __init__(self, map_size):
         self.width = 60
@@ -90,7 +84,6 @@ class Player:
         self.x = (10 * 10 * CELL_SIZE) // 2 - self.width // 2
         self.y = (10 * 10 * CELL_SIZE) // 2 - self.height // 2
         self.health = HealthSystem(5, 5)
-
 
 @dataclass
 class WeaponConfig:
@@ -102,7 +95,6 @@ class WeaponConfig:
     bullet_color: tuple
     ammo_capacity: int
     spread: float = 0.0
-
 
 class Weapon:
     def __init__(self, config, texture):
@@ -126,7 +118,6 @@ class Weapon:
     def add_ammo(self, amount):
         self.current_ammo = min(self.current_ammo + amount, self.max_ammo)
 
-
 class Bullet:
     def __init__(self, x, y, direction, config):
         self.x = x
@@ -138,7 +129,6 @@ class Bullet:
         self.damage = config.damage
         self.spread = random.uniform(-config.spread, config.spread)
 
-
 class Item:
     def __init__(self, x, y, texture, original=None):
         self.x = x
@@ -148,12 +138,10 @@ class Item:
         self.height = 30
         self.original = original
 
-
 class AmmoItem(Item):
     def __init__(self, x, y):
         super().__init__(x, y, textures['ammo'])
         self.amount = 10
-
 
 class Inventory:
     def __init__(self):
@@ -198,7 +186,6 @@ class Inventory:
                     screen.blit(text, (x + 35, y + 35))
                 else:
                     screen.blit(pygame.transform.scale(item.texture, (30, 30)), (x + 10, y + 10))
-
 
 class Slime:
     ANIMATIONS = {'up': [], 'down': [], 'left': [], 'right': []}
@@ -285,7 +272,6 @@ class Slime:
             heart_pos = camera.apply((self.x + i * 20 - 15, self.y - 30))
             screen.blit(textures['heart'], heart_pos)
 
-
 textures = {
     'grass1': pygame.transform.scale(pygame.image.load("texture/land/grass1.png").convert(), (CELL_SIZE, CELL_SIZE)),
     'grass2': pygame.transform.scale(pygame.image.load("texture/land/grass2.png").convert(), (CELL_SIZE, CELL_SIZE)),
@@ -339,14 +325,10 @@ for chunk_x in range(10):
                         decorations[(x, y)] = random.choice(['flower', 'rock'])
 
 player_frames = {
-    "down": [pygame.transform.scale(pygame.image.load(f"chart/down/player{i}.png").convert_alpha(), (60, 80)) for i in
-             range(1, 5)],
-    "up": [pygame.transform.scale(pygame.image.load(f"chart/up/player{i}.png").convert_alpha(), (60, 80)) for i in
-           range(1, 5)],
-    "left": [pygame.transform.scale(pygame.image.load(f"chart/left/player{i}.png").convert_alpha(), (60, 80)) for i in
-             range(1, 5)],
-    "right": [pygame.transform.scale(pygame.image.load(f"chart/right/player{i}.png").convert_alpha(), (60, 80)) for i in
-              range(1, 5)]
+    "down": [pygame.transform.scale(pygame.image.load(f"chart/down/player{i}.png").convert_alpha(), (60, 80)) for i in range(1, 5)],
+    "up": [pygame.transform.scale(pygame.image.load(f"chart/up/player{i}.png").convert_alpha(), (60, 80)) for i in range(1, 5)],
+    "left": [pygame.transform.scale(pygame.image.load(f"chart/left/player{i}.png").convert_alpha(), (60, 80)) for i in range(1, 5)],
+    "right": [pygame.transform.scale(pygame.image.load(f"chart/right/player{i}.png").convert_alpha(), (60, 80)) for i in range(1, 5)]
 }
 
 player = Player(MAP_SIZE)
@@ -388,11 +370,10 @@ while running:
 
                 if event.button == 1:
                     auto_fire = True
-                if event.button == 3:  # Права кнопка миші
+                if event.button == 3:
                     if inventory.selected != -1:
                         weapon = inventory.slots[inventory.selected]
                         if isinstance(weapon, Weapon):
-                            # Заборона перезарядки для пістолета
                             if weapon.config.name != "Pistol":
                                 weapon.current_ammo = weapon.config.ammo_capacity
 
@@ -407,9 +388,14 @@ while running:
                             player.y + player.height / 2 - (item.y + item.height / 2)
                         )
                         if distance < 50:
-                            if inventory.add_item(item):
-                                items_on_ground.remove(item)
-                                break
+                            if isinstance(item, Item) and isinstance(item.original, Weapon):
+                                if inventory.add_item(item.original):
+                                    items_on_ground.remove(item)
+                                    break
+                            else:
+                                if inventory.add_item(item):
+                                    items_on_ground.remove(item)
+                                    break
 
                 if event.key == pygame.K_q and inventory.selected != -1:
                     dropped_item = inventory.remove_item(inventory.selected)
